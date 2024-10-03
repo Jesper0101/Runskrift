@@ -1,0 +1,1 @@
+To extract coordinates from wikipedia API call https://en.wikipedia.org/w/api.php?action=query&prop=coordinates&titles=Page , where Pagee is page title, guess the space has to be replaced.
