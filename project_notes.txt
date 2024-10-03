@@ -1,2 +1,13 @@
-To extract coordinates from wikipedia API call https://en.wikipedia.org/w/api.php?action=query&prop=coordinates&titles=Page , where Pagee is page title, guess the space has to be replaced.
+To extract coordinates from wikipedia API call https://en.wikipedia.org/w/api.php?action=query&prop=coordinates&titles=Page , where Pagee is page title, guess the space has to be replaced. This should be than 
+
+URL = f'https://sv.wikipedia.org/w/api.php'
+headers = {'user-agent': 'SchizoBot/0.1 (schizoakustik@schizoakustik.se)'} #better to use real mail so we are not incidentally blocked
+params = {'action': 'query','prop': 'coordinates','titles': inskrift,'format': 'json'} 
+inskrift = 'Kvarntorpshällen'
+response = requests.get(URL, headers=headers, params=params)
+page_data = response.json()
+coord_tmp = page_data['query']['pages']
+coord_tmp_tmp = coord_tmp[next(iter(coord_tmp))]['coordinates']
+(coord_tmp_tmp[0]['lat'], coord_tmp_tmp[0]['lon'])
+
 Tool to convert database to wiki "article" https://taxelson.se/wp/runtext.php
