@@ -11,3 +11,7 @@ coord_tmp_tmp = coord_tmp[next(iter(coord_tmp))]['coordinates']
 (coord_tmp_tmp[0]['lat'], coord_tmp_tmp[0]['lon'])
 
 Tool to convert database to wiki "article" https://taxelson.se/wp/runtext.php
+
+Python bibliotek som kan vara till hjälp
+https://medium.com/@sarowar.saurav10/6-useful-text-summarization-algorithm-in-python-dfc8a9d33074
+https://www.turing.com/kb/5-powerful-text-summarization-techniques-in-python
