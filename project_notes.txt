@@ -15,3 +15,5 @@ Tool to convert database to wiki "article" https://taxelson.se/wp/runtext.php
 Python bibliotek som kan vara till hjälp
 https://medium.com/@sarowar.saurav10/6-useful-text-summarization-algorithm-in-python-dfc8a9d33074
 https://www.turing.com/kb/5-powerful-text-summarization-techniques-in-python
+
+upplandsruninskriftermain.py : only Upplands runeinskrifter with template Infobox fornminne. Do not run on many pages, as it will miss popular Runinskriftsfakta template. So far rae (otvättad) data.
