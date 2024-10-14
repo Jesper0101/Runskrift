@@ -1,4 +1,4 @@
-## Runes Project
+## Rune Project
 
 This project explores runestones using machine learning techniques to analyze and classify them, paired with an interactive map that visualizes their geographical locations. The data is integrated into Power BI for  visualizations, including coordinates of runestones, allowing for insights into their distribution.
 
