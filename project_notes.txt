@@ -17,3 +17,26 @@ https://medium.com/@sarowar.saurav10/6-useful-text-summarization-algorithm-in-py
 https://www.turing.com/kb/5-powerful-text-summarization-techniques-in-python
 
 upplandsruninskriftermain.py : only Upplands runeinskrifter with template Infobox fornminne. Do not run on many pages, as it will miss popular Runinskriftsfakta template. So far rae (otvättad) data.
+
+
+
+Machine-learning models for text analytics
+https://docs-previous.pega.com/decision-management/87/machine-learning-models-text-analytics
+
+Dating Texts with Decision Trees
+https://towardsdatascience.com/dating-texts-with-decision-trees-c716841a33f1
+
+Text Classification: What It Is & How to Get Started
+https://levity.ai/blog/text-classification
+
+Machine learning in diachronic corpus phonology: mining verse data to infer trajectories in English phonotactics
+https://www.researchgate.net/publication/329393503_Machine_learning_in_diachronic_corpus_phonology_mining_verse_data_to_infer_trajectories_in_English_phonotactics
+
+Document Classification With Machine Learning: Computer Vision, OCR, NLP, and Other Techniques
+https://www.altexsoft.com/blog/document-classification/
+
+Machine Learning for Unstructured Document Analysis: a guide
+https://kili-technology.com/data-labeling/machine-learning/machine-learning-for-unstructured-document-analysis
+
+Old Norse Corpus
+https://legacy.cltk.org/en/latest/old_norse.html
