@@ -81,7 +81,6 @@ def read_page(inskrift, df_periods):
         norm = tmp[tmp.find('Normalisering till runsvenska:')+30:tmp.rfind('Översättning till nusvenska:')].strip()
     # now get html of a page
     p_wiki_html = wiki_wiki_html.page(inskrift)
-    p_wiki_html = wiki_wiki_html.page(inskrift)
     tmp = p_wiki_html.text
     if tmp.find('<p>Översättning\xa0till nusvenska:\n</p>\n<dl><dd>') == -1:
         logger.warning('no translation in ', inskrift)
@@ -104,24 +103,33 @@ def read_page(inskrift, df_periods):
             lon = template.arguments[1].value
             if lon == 'N':
                 lon = template.arguments[2].value
-        elif template.name[0:17] == 'Infobox fornminne':
-            for arg in data.templates[0].arguments:
-                if arg.name[0:9] == ' undertyp':
+        elif 'Infobox fornminne' in template.name:
+            for arg in template.arguments:
+                if 'undertyp' in arg.name:
                     material = arg.value
-                elif arg.name[0:8] == ' ristare':
+                elif 'ristare' in arg.name:
                     ristare = arg.value
-                elif arg.name[0:8] == ' runstil':
+                elif 'runstil' in arg.name:
                     runstil = arg.value
-                elif arg.name[0:13] == ' tillkomsttid':
+                elif 'tillkomsttid' in  arg.name:
                     tillkomsttid = arg.value
-        elif template.name[0:17] == 'Runinskriftsfakta':
-            for arg in data.templates[0].arguments:
-                if arg.name[0:8] == ' ristare':
+        elif 'Runinskriftsfakta' in template.name:
+            for arg in template.arguments:
+                if 'ristare' in arg.name:
                     ristare = arg.value
-                elif arg.name[0:13] == ' tillkomsttid':
+                elif 'tillkomsttid' in arg.name:
                     tillkomsttid = arg.value
+        elif 'Runskriftsöversättning' in template.name: #if template exists it will prevail over html
+            for arg in template.arguments:
+                if 'translitterering' in arg.name :
+                    lit = arg.value
+                elif "normalisering" in arg.name and "normaliseringsref" not in arg.name:
+                    norm = arg.value
+                elif 'översättning' in arg.name and 'översättningsref' not in arg.name:
+                    trans = arg.value
+
     raw_of_data, df_periods = clean_data([inskrift, get_rev(inskrift), lit, norm, trans, lat, lon, runstil, ristare, material, tillkomsttid], df_periods )
-    print(raw_of_data)
+    #print(raw_of_data)
     return raw_of_data, df_periods               
     #return [inskrift, get_rev(inskrift), norm, trans, lat, lon, runstil, ristare, material, begin_date, end_date, NaN]
 
@@ -150,21 +158,30 @@ def get_period(df_periods, period):
         return period_begin, period_end, df_periods
 
 def clean_data(raw_of_data, df_periods):
-    raw_of_data = [ele.strip() if isinstance(ele,str) else ele for ele in raw_of_data]
+    raw_of_data = [ele.strip() if isinstance(ele,str) else ele for ele in raw_of_data] #remove spaces around
+    raw_of_data = [ele.replace('&nbsp,', ' ') if isinstance(ele,str) else ele for ele in raw_of_data] #replace hard spaces
     raw_of_data = [ele.replace('[[', '') if isinstance(ele,str) else ele for ele in raw_of_data]
     raw_of_data = [ele.replace(']]', '') if isinstance(ele,str) else ele for ele in raw_of_data]
     raw_of_data = [ele.replace('\n', '') if isinstance(ele,str) else ele for ele in raw_of_data]
     raw_of_data = [ele.replace('?', '') if isinstance(ele,str) else ele for ele in raw_of_data] #simplifiera saker
     
-    ristare_str = raw_of_data[8]
-    if 'Lista över runristare#' in ristare_str:
-        l = [m.start() for m in re.finditer('Lista över runristare#', ristare_str)]
-        raw_of_data[8] = ristare_str[l[0]+23:len(ristare_str)] 
-        
+    if 'okänd' in raw_of_data[8]:
+        raw_of_data[8] = ''
+    raw_of_data[8] = re.sub('Lista över runristare#.', '', raw_of_data[8]) 
+    raw_of_data[8] = re.sub('Lista_över_runristare#.', '', raw_of_data[8])               
     raw_of_data[8] = raw_of_data[8].replace('Lista över runristare|', '')
+
+    raw_of_data[8] = raw_of_data[8].replace('[Stille 1999b:158]', '')
+    raw_of_data[8] = raw_of_data[8].replace('<ref name=sri1/>', '')
+    raw_of_data[8] = raw_of_data[8].replace('[Åhlén 2004]', '')
+    raw_of_data[8] = raw_of_data[8].replace('[Åhlén 1997]', '')
+    raw_of_data[8] = raw_of_data[8].replace('[Källström 1999:113]', '')
+    raw_of_data[8] = raw_of_data[8].replace('<ref name="sri1"/>', '')
+    raw_of_data[8] = raw_of_data[8].replace('&nbsp,', '')
     raw_of_data[8] = raw_of_data[8].replace('<ref name=rtdb/>', '')
     raw_of_data[8] = raw_of_data[8].replace(' (runristare)|', ',')
     raw_of_data[8] = raw_of_data[8].replace(' runristare', '')
+    raw_of_data[8] = raw_of_data[8].replace('_runristare', '')
     raw_of_data[8] = raw_of_data[8].replace(';', ',')
     raw_of_data[8] = raw_of_data[8].replace('osignerad', '')
     raw_of_data[8] = raw_of_data[8].replace('|', ',')
@@ -200,7 +217,8 @@ logging.basicConfig(
     
 # some constants
 URL = f'https://sv.wikipedia.org/w/api.php'
-headers = {'user-agent': 'runstenar (schizoakustik@schizoakustik.se)'}
+#headers = {'user-agent': 'SchizoBot/0.1 (schizoakustik@schizoakustik.se)'}
+headers = {'user-agent': 'runstenar (anton.grigoriev@alumni.chalmers.se)'}
 
 # get the data from the previous run
 logger.info('Starting data pipeline...')
@@ -208,8 +226,10 @@ data = DatabaseLoader()
 df = data.load_data()
 
 # read the category
-wiki_wiki = wikipediaapi.Wikipedia('runstenar (schizoakustik@schizoakustik.se)', 'sv')
-wiki_wiki_html = wikipediaapi.Wikipedia('runstenar (schizoakustik@schizoakustik.se)', 'sv', extract_format=wikipediaapi.ExtractFormat.HTML)
+#wiki_wiki = wikipediaapi.Wikipedia('UpplandsRunes (schizoakustik@schizoakustik.se)', 'sv')
+wiki_wiki = wikipediaapi.Wikipedia('runstenar (anton.grigoriev@alumni.chalmers.se)', 'sv')
+#wiki_wiki_html = wikipediaapi.Wikipedia('UpplandsRunes (schizoakustik@schizoakustik.se)', 'sv', extract_format=wikipediaapi.ExtractFormat.HTML)
+wiki_wiki_html = wikipediaapi.Wikipedia('runstenar (anton.grigoriev@alumni.chalmers.se)', 'sv', extract_format=wikipediaapi.ExtractFormat.HTML)
 cat = wiki_wiki.page("Category:Upplands runinskrifter")
 
 
@@ -254,3 +274,5 @@ for c in cat.categorymembers.values():
 # save result
 output = DatabaseSave(df)
 output.save_data()
+# save result to readable format
+df.to_csv('Uppland.csv', index=False)
