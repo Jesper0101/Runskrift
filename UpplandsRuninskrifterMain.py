@@ -8,6 +8,8 @@ import wikipediaapi
 import requests
 import pandas as pd
 import wikitextparser as wtp
+import re
+import os
 
 # # Exportera&ladda en Pandas `DataFrame` till SQL
 # 
@@ -40,10 +42,10 @@ class DatabaseLoader:
         if pd.read_sql('SELECT name FROM sqlite_master', self.connection).empty:
             self.logger.error('Making new database due to error ...')
             # define raw columns
-            return pd.DataFrame(columns=["signum", "revisionID", "translitterering", "normalisering", "translation", "Latitude", "Longitude", "Stil", "Inscriber", "Material", "Period", "edition" ]) #, "EndPeriod", "Date"
+            return pd.DataFrame(columns=["signum", "revisionID", "translitterering", "normalisering", "translation", "Latitude", "Longitude", "Stil", "Inscriber", "Material", "Period_begin", "Period_end", "edition" ]) #, "EndPeriod", "Date"
         else:
             self.logger.info('Load data: success.')
-            return pd.read_sql('SELECT signum, revisionID, translitterering, normalisering, translation, Latitude, Longitude, Stil, Inscriber, Material, Period, edition FROM Upplands_runeinscriptions', self.connection)
+            return pd.read_sql('SELECT signum, revisionID, translitterering, normalisering, translation, Latitude, Longitude, Stil, Inscriber, Material, Period_begin, Period_end, edition FROM Upplands_runeinscriptions', self.connection)
 
 #=========== end of Exportera&ladda en Pandas `DataFrame` till SQL ==========
 
@@ -54,12 +56,12 @@ def get_rev(inskrift):
     page_data = response.json()
     return page_data['parse']['revid']
     
-def read_page(inskrift):
+def read_page(inskrift, df_periods):
     # allow empty data for reading
     lat = 0
     lon = 0
     runstil = '' 
-    ristare = '' 
+    ristare = ''
     material = '' 
     tillkomsttid = ''
     #get plain text of a page
@@ -100,6 +102,8 @@ def read_page(inskrift):
         if template.name == 'coord':
             lat = template.arguments[0].value
             lon = template.arguments[1].value
+            if lon == 'N':
+                lon = template.arguments[2].value
         elif template.name[0:17] == 'Infobox fornminne':
             for arg in data.templates[0].arguments:
                 if arg.name[0:9] == ' undertyp':
@@ -110,10 +114,82 @@ def read_page(inskrift):
                     runstil = arg.value
                 elif arg.name[0:13] == ' tillkomsttid':
                     tillkomsttid = arg.value
-    print([inskrift, get_rev(inskrift), lit, norm, trans, lat, lon, runstil, ristare, material, tillkomsttid] )
-    return [inskrift, get_rev(inskrift), lit, norm, trans, lat, lon, runstil, ristare, material, tillkomsttid]               
+        elif template.name[0:17] == 'Runinskriftsfakta':
+            for arg in data.templates[0].arguments:
+                if arg.name[0:8] == ' ristare':
+                    ristare = arg.value
+                elif arg.name[0:13] == ' tillkomsttid':
+                    tillkomsttid = arg.value
+    raw_of_data, df_periods = clean_data([inskrift, get_rev(inskrift), lit, norm, trans, lat, lon, runstil, ristare, material, tillkomsttid], df_periods )
+    print(raw_of_data)
+    return raw_of_data, df_periods               
     #return [inskrift, get_rev(inskrift), norm, trans, lat, lon, runstil, ristare, material, begin_date, end_date, NaN]
 
+def get_period(df_periods, period):
+    # Check if the question exists in the DataFrame
+    period = period.strip()
+    if period == '':
+        period = ' '
+    if period in df_periods['Period'].values:
+        period_begin = df_periods[df_periods['Period'] == period]['Period_begin'].values[0]
+        period_end = df_periods[df_periods['Period'] == period]['Period_end'].values[0]
+        return period_begin, period_end, df_periods
+    else:
+        # If the period is not found, prompt the user for the answer
+        period_begin, period_end = input(f" '{period}' is not known. Please provide the answer (period_begin, period_end): ").split()
+        
+        # Validate the answer (check if it's two digits)
+        while not (period_begin.isdigit() and period_end.isdigit()):
+            period_begin, period_end = input(f" '{period}' is not known. Please provide the answer (period_begin, period_end): ").split()
+
+        # Add the new question and answer to the DataFrame
+        new_row = pd.DataFrame({'Period': [period], 'Period_begin': [period_begin],'Period_end': [period_end]})
+        df_periods = pd.concat([df_periods, new_row], ignore_index=True)
+        # Save the DataFrame vocabulary for periods back to the file
+        df_periods.to_csv('periods.csv', index=False)
+        return period_begin, period_end, df_periods
+
+def clean_data(raw_of_data, df_periods):
+    raw_of_data = [ele.strip() if isinstance(ele,str) else ele for ele in raw_of_data]
+    raw_of_data = [ele.replace('[[', '') if isinstance(ele,str) else ele for ele in raw_of_data]
+    raw_of_data = [ele.replace(']]', '') if isinstance(ele,str) else ele for ele in raw_of_data]
+    raw_of_data = [ele.replace('\n', '') if isinstance(ele,str) else ele for ele in raw_of_data]
+    raw_of_data = [ele.replace('?', '') if isinstance(ele,str) else ele for ele in raw_of_data] #simplifiera saker
+    
+    ristare_str = raw_of_data[8]
+    if 'Lista över runristare#' in ristare_str:
+        l = [m.start() for m in re.finditer('Lista över runristare#', ristare_str)]
+        raw_of_data[8] = ristare_str[l[0]+23:len(ristare_str)] 
+        
+    raw_of_data[8] = raw_of_data[8].replace('Lista över runristare|', '')
+    raw_of_data[8] = raw_of_data[8].replace('<ref name=rtdb/>', '')
+    raw_of_data[8] = raw_of_data[8].replace(' (runristare)|', ',')
+    raw_of_data[8] = raw_of_data[8].replace(' runristare', '')
+    raw_of_data[8] = raw_of_data[8].replace(';', ',')
+    raw_of_data[8] = raw_of_data[8].replace('osignerad', '')
+    raw_of_data[8] = raw_of_data[8].replace('|', ',')
+    raw_of_data[8] = raw_of_data[8].replace('[Källström 1999:54f]', '')
+    raw_of_data[8] = raw_of_data[8].replace('(A)', '') #big simplification
+    raw_of_data[8] = raw_of_data[8].replace('(S)', '') #big simplification
+    raw_of_data[8] = raw_of_data[8].replace('(', '')
+    raw_of_data[8] = raw_of_data[8].replace(')', '')
+    raw_of_data[10] = raw_of_data[10].replace('<!-- Skyddsinfo -->', '')
+    raw_of_data[10] = raw_of_data[10].replace('<ref name="sri1"></ref>', '')
+    period_begin, period_end, df_periods = get_period(df_periods, raw_of_data[10])
+    raw_of_data[10] = raw_of_data[10] = period_begin
+    raw_of_data.append(period_end) 
+    
+    stil_str = raw_of_data[7].lower()
+    if 'pr' in stil_str:
+        l = [m.start() for m in re.finditer('pr', stil_str)]
+        new_stil_str = [stil_str[s:s+3] for s  in l]
+        raw_of_data[7] = ','.join(new_stil_str)
+    elif  'ringerik' in raw_of_data[7].lower():
+        raw_of_data[7] = 'pr1,pr2'
+    elif  'urnes' in raw_of_data[7].lower():
+        raw_of_data[7] = 'pr3,pr4,pr5'
+
+    return raw_of_data, df_periods
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -141,18 +217,25 @@ cat = wiki_wiki.page("Category:Upplands runinskrifter")
 
 
 
+#read vocabulary for periods as dataframe
+file_name_periods = 'periods.csv'
+if os.path.exists(file_name_periods):
+    df_periods = pd.read_csv(file_name_periods)
+else:
+    df_periods = pd.DataFrame(columns=['Period', 'Period_begin','Period_end'])  # Create an empty DataFrame if file doesn't exist
+
 count=0
 for c in cat.categorymembers.values():
     count = count + 1
     #limit number of pages for exercise purpose 
-    if count > 20 : break
+    if count > 50 : break
     print(c.title)
     inskrift = c.title
     #if the page is new read and save it
     if not (inskrift in df['signum'].values):
         #save the page as v = 0
         try: 
-            rad = read_page(inskrift)
+            rad, df_periods = read_page(inskrift, df_periods)
             rad.append(0)
             df.loc[len(df)]  = rad
         except:
@@ -165,7 +248,7 @@ for c in cat.categorymembers.values():
         if df.loc[df['signum'] == inskrift, 'revisionID'].item() < page_rev_id:
             # we keep track of both wiki revisions and our own editions.
             try: 
-                rad = read_page(inskrift)
+                rad, df_periods = read_page(inskrift, df_periods)
                 rad.append(df.loc[df['signum'] == inskrift,'edition'].item() + 1 )
                 df.loc[df['signum'] == inskrift] = rad
             except:
