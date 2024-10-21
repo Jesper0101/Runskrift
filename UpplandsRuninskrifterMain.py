@@ -190,6 +190,7 @@ def clean_data(raw_of_data, df_periods):
     raw_of_data[8] = raw_of_data[8].replace('(S)', '') #big simplification
     raw_of_data[8] = raw_of_data[8].replace('(', '')
     raw_of_data[8] = raw_of_data[8].replace(')', '')
+    raw_of_data[8] = raw_of_data[8].strip(' ,')
     raw_of_data[10] = raw_of_data[10].replace('<!-- Skyddsinfo -->', '')
     raw_of_data[10] = raw_of_data[10].replace('<ref name="sri1"></ref>', '')
     period_begin, period_end, df_periods = get_period(df_periods, raw_of_data[10])
