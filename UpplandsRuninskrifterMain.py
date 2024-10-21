@@ -200,8 +200,7 @@ logging.basicConfig(
     
 # some constants
 URL = f'https://sv.wikipedia.org/w/api.php'
-#headers = {'user-agent': 'SchizoBot/0.1 (schizoakustik@schizoakustik.se)'}
-headers = {'user-agent': 'runstenar (anton.grigoriev@alumni.chalmers.se)'}
+headers = {'user-agent': 'runstenar (schizoakustik@schizoakustik.se)'}
 
 # get the data from the previous run
 logger.info('Starting data pipeline...')
@@ -209,10 +208,8 @@ data = DatabaseLoader()
 df = data.load_data()
 
 # read the category
-#wiki_wiki = wikipediaapi.Wikipedia('UpplandsRunes (schizoakustik@schizoakustik.se)', 'sv')
-wiki_wiki = wikipediaapi.Wikipedia('runstenar (anton.grigoriev@alumni.chalmers.se)', 'sv')
-#wiki_wiki_html = wikipediaapi.Wikipedia('UpplandsRunes (schizoakustik@schizoakustik.se)', 'sv', extract_format=wikipediaapi.ExtractFormat.HTML)
-wiki_wiki_html = wikipediaapi.Wikipedia('runstenar (anton.grigoriev@alumni.chalmers.se)', 'sv', extract_format=wikipediaapi.ExtractFormat.HTML)
+wiki_wiki = wikipediaapi.Wikipedia('runstenar (schizoakustik@schizoakustik.se)', 'sv')
+wiki_wiki_html = wikipediaapi.Wikipedia('runstenar (schizoakustik@schizoakustik.se)', 'sv', extract_format=wikipediaapi.ExtractFormat.HTML)
 cat = wiki_wiki.page("Category:Upplands runinskrifter")
 
 
