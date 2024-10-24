@@ -55,7 +55,7 @@ Våran machine learning model
 
 3. Power BI Setup:
 
-- Open the provided Power BI file (Rundata.pbix).
+- Open the provided Power BI folder and then run the Power BI file called (Rundata.pbix).
 - Ensure you have Power BI Desktop installed. You can download it [here](https://powerbi.microsoft.com/desktop/).
 
 4. Data Visualization:
