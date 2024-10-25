@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+##### !/usr/bin/env python
 # coding: utf-8
 # Import modules
 import logging
@@ -19,7 +19,7 @@ import sqlite3
 # Create connection to database file, no matter load or save
 con = sqlite3.connect('Uppland.db')
 
-class DatabaseSave:
+'''class DatabaseSave:
     "Class to save data to SQL table."
 
     def __init__(self,data, connection=con) -> None:
@@ -29,9 +29,9 @@ class DatabaseSave:
     def save_data(self):
         self.logger.info('Saving data...')
         # Save DataFrame data into table Upplands runeinscriptions in database file
-        self.data.to_sql('Upplands_runeinscriptions', self.connection, if_exists='replace')
-        
-class DatabaseLoader:
+        self.data.to_sql('Upplands runinskrifter', self.connection, if_exists='replace')
+'''        
+'''class DatabaseLoader:
     "Class to load data from SQL table."
 
     def __init__(self, connection=con) -> None:
@@ -46,6 +46,7 @@ class DatabaseLoader:
         else:
             self.logger.info('Load data: success.')
             return pd.read_sql('SELECT signum, revisionID, translitterering, normalisering, translation, Latitude, Longitude, Stil, Inscriber, Material, Period_begin, Period_end, edition FROM Upplands_runeinscriptions', self.connection)
+'''
 
 #=========== end of Exportera&ladda en Pandas `DataFrame` till SQL ==========
 
@@ -222,18 +223,29 @@ URL = f'https://sv.wikipedia.org/w/api.php'
 headers = {'user-agent': 'runstenar (anton.grigoriev@alumni.chalmers.se)'}
 
 # get the data from the previous run
-logger.info('Starting data pipeline...')
-data = DatabaseLoader()
-df = data.load_data()
+##logger.info('Starting data pipeline...')
+##data = DatabaseLoader()
+##df = data.load_data()
+##con = sqlite3.connect('Uppland.db')
+##df.to_sql('Upplands_runeinscriptions', con, if_exists='replace')
+logger.info('Loading data...')
+if pd.read_sql('SELECT name FROM sqlite_master', con).empty:
+    logger.error('Making new database due to error ...')
+    # define raw columns
+    df = pd.DataFrame(columns=["signum", "revisionID", "translitterering", "normalisering", "translation", "Latitude", "Longitude", "Stil", "Inscriber", "Material", "Period_begin", "Period_end", "edition" ]) #, "EndPeriod", "Date"
+else:
+    logger.info('Load data: success.')
+    df = pd.read_sql('SELECT signum, revisionID, translitterering, normalisering, translation, Latitude, Longitude, Stil, Inscriber, Material, Period_begin, Period_end, edition FROM Upplands_runeinscriptions', con)
+
 
 # read the category
 #wiki_wiki = wikipediaapi.Wikipedia('UpplandsRunes (schizoakustik@schizoakustik.se)', 'sv')
 wiki_wiki = wikipediaapi.Wikipedia('runstenar (anton.grigoriev@alumni.chalmers.se)', 'sv')
 #wiki_wiki_html = wikipediaapi.Wikipedia('UpplandsRunes (schizoakustik@schizoakustik.se)', 'sv', extract_format=wikipediaapi.ExtractFormat.HTML)
 wiki_wiki_html = wikipediaapi.Wikipedia('runstenar (anton.grigoriev@alumni.chalmers.se)', 'sv', extract_format=wikipediaapi.ExtractFormat.HTML)
+#cat = wiki_wiki.page("Category:Södermanlands runinskrifter")
+#cat = wiki_wiki.page("Category:Västergötlands runinskrifter")
 cat = wiki_wiki.page("Category:Upplands runinskrifter")
-
-
 
 #read vocabulary for periods as dataframe
 file_name_periods = 'periods.csv'
@@ -246,7 +258,7 @@ count=0
 for c in cat.categorymembers.values():
     count = count + 1
     #limit number of pages for exercise purpose 
-    if count > 50 : break
+    if count > 40 : break
     print(c.title)
     inskrift = c.title
     #if the page is new read and save it
@@ -273,7 +285,10 @@ for c in cat.categorymembers.values():
                 logger.warning('skipping ', inskrift)
         
 # save result
-output = DatabaseSave(df)
-output.save_data()
+##output = DatabaseSave(df)
+##output.save_data()
+logger.info('Saving data...')
+# Save DataFrame data into table Upplands runeinscriptions in database file as defined in connection con
+df.to_sql('Upplands runinskrifter', con, if_exists='replace')
 # save result to readable format
 df.to_csv('Uppland.csv', index=False)
