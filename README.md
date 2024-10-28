@@ -39,18 +39,23 @@ This project explores runestones using machine learning techniques to analyze an
 
 To set up this project locally:
 
-1. Clone the Repository:
+1. Clone the Repository
+Start by cloning the repository to your local machine. This step allows you to access all files needed for the project, including datasets, scripts, and the Power BI visualization template.
 
 ```bash
 git clone https://github.com/Jesper0101/Runskrift.git
 cd Runskrift
 ```
 
-2. Machine Learning Model: Run the machine learning analysis:
+2. Machine Learning Model Setup
+The repository includes machine learning scripts that analyze and classify runestone inscriptions. To run these models, ensure that you have Python 3.12 and the required Python libraries installed. These libraries, such as pandas and scikit-learn, handle data processing, machine learning, and visualization.
+
+You can install the libraries using:
 
 ```bash
-Våran machine learning model
+pip install pandas scikit-learn matplotlib numpy sqlalchemy requests chardet xlrd
 ```
+Then, execute the machine learning scripts to begin processing and analyzing the runestone data.
 
 
 3. Power BI Setup:
